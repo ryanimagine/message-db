@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+export PGUSER=$1
+export PGPASSWORD=$2
+export PGHOST=$3
+
+if [ ! "$PGHOST" ]; then
+    echo "Usage is install.sh username password host"
+    exit 1
+fi
+
 set -e
 
 function script_dir {
@@ -26,18 +35,6 @@ if [ -z ${PGOPTIONS+x} ]; then
   export PGOPTIONS='-c client_min_messages=warning'
 fi
 
-function create-user {
-  base=$(script_dir)
-
-  echo "» message_store role"
-  psql postgres -q -f $base/roles/message-store.sql
-}
-
-function create-database {
-  echo "» $database database"
-  createdb $database
-}
-
 function create-schema {
   echo "» message_store schema"
   psql $database -q -f $base/schema/message-store.sql
@@ -57,16 +54,6 @@ function create-table {
   psql $database -q -f $base/tables/messages.sql
 }
 
-echo
-
-echo "Creating User"
-echo "- - -"
-create-user
-echo
-
-echo "Creating Database"
-echo "- - -"
-create-database
 echo
 
 echo "Creating Schema"
@@ -92,9 +79,6 @@ source $base/install-indexes.sh
 
 # Install views
 source $base/install-views.sh
-
-# Install privileges
-source $base/install-privileges.sh
 
 echo "= = ="
 echo "Done Installing Database"
